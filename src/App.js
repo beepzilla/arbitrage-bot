@@ -1,5 +1,5 @@
 import React from 'react';
-import { Switch, Route, NavLink } from 'react-router-dom';
+import { Routes, Route, NavLink } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import Settings from './pages/Settings';
 import Logs from './pages/Logs';
@@ -9,15 +9,15 @@ function App() {
   return (
     <div className="App">
       <nav>
-        <NavLink to="/" exact activeClassName="active">Dashboard</NavLink>
-        <NavLink to="/settings" activeClassName="active">Settings</NavLink>
-        <NavLink to="/logs" activeClassName="active">Logs</NavLink>
+        <NavLink to="/" exact="true" activeclassname="active">Dashboard</NavLink>
+        <NavLink to="/settings" activeclassname="active">Settings</NavLink>
+        <NavLink to="/logs" activeclassname="active">Logs</NavLink>
       </nav>
-      <Switch>
-        <Route path="/" exact component={Dashboard} />
-        <Route path="/settings" component={Settings} />
-        <Route path="/logs" component={Logs} />
-      </Switch>
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/logs" element={<Logs />} />
+      </Routes>
     </div>
   );
 }
