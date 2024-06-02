@@ -1,63 +1,74 @@
-import React, { useState, useContext } from 'react';
-import { PairContext } from '../context/PairContext';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import Dashboard from './Dashboard';
 
-function Settings() {
-  const [baseToken, setBaseToken] = useState('');
-  const [pairToken, setPairToken] = useState('');
-  const [exchange, setExchange] = useState('sushiswap'); // Default to sushiswap
-  const [fee, setFee] = useState(3000); // Default fee tier
-  const { pairs, setPairs } = useContext(PairContext);
+const Settings = () => {
+    const [pairs, setPairs] = useState([]);
+    const [exchanges, setExchanges] = useState([]);
+    const [feeTiers, setFeeTiers] = useState({
+        '0.01%': true,
+        '0.3%': true,
+        '1%': true
+    });
 
-  const sanitizeAddress = (address) => address.trim();
+    useEffect(() => {
+        // Fetch pairs from the JSON file in the public directory
+        axios.get('/pairs.json')
+            .then(response => {
+                console.log('Fetched pairs:', response.data);
+                setPairs(response.data);
+            })
+            .catch(error => {
+                console.error('Error fetching pairs:', error);
+                setPairs([]); // Set pairs to an empty array in case of error
+            });
 
-  const addPair = () => {
-    const sanitizedBaseToken = sanitizeAddress(baseToken);
-    const sanitizedPairToken = sanitizeAddress(pairToken);
-    setPairs([...pairs, { baseToken: sanitizedBaseToken, pairToken: sanitizedPairToken, exchange, fee }]);
-    setBaseToken('');
-    setPairToken('');
-    setExchange('sushiswap'); // Reset to default exchange
-    setFee(3000); // Reset to default fee tier
-  };
+        // Set up available exchanges
+        setExchanges(['Uniswap', 'Sushiswap', 'Balancer']); // Add more exchanges as needed
+    }, []);
 
-  return (
-    <div className="content">
-      <h2>Settings</h2>
-      <div>
-        <input
-          type="text"
-          value={baseToken}
-          placeholder="Base Token Address"
-          onChange={(e) => setBaseToken(e.target.value)}
-        />
-        <input
-          type="text"
-          value={pairToken}
-          placeholder="Pair Token Address"
-          onChange={(e) => setPairToken(e.target.value)}
-        />
-        <select value={exchange} onChange={(e) => setExchange(e.target.value)}>
-          <option value="sushiswap">SushiSwap</option>
-          <option value="quickswap">QuickSwap</option>
-          {/* Add other exchanges as needed */}
-        </select>
-        <select value={fee} onChange={(e) => setFee(e.target.value)}>
-          <option value={500}>0.05%</option>
-          <option value={3000}>0.3%</option>
-          <option value={10000}>1%</option>
-        </select>
-        <button onClick={addPair}>Add Pair</button>
-      </div>
-      <h3>Saved Pairs</h3>
-      <ul>
-        {pairs.map((pair, index) => (
-          <li key={index}>
-            {`Base: ${pair.baseToken} - Pair: ${pair.pairToken} - Exchange: ${pair.exchange} - Fee: ${pair.fee}`}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
+    const handleFeeTierChange = (tier) => {
+        setFeeTiers(prevState => ({
+            ...prevState,
+            [tier]: !prevState[tier]
+        }));
+    };
+
+    return (
+        <div className="settings">
+            <h2>Settings</h2>
+            <div>
+                <h3>Exchanges</h3>
+                <ul>
+                    {exchanges.map(exchange => (
+                        <li key={exchange}>{exchange}</li>
+                    ))}
+                </ul>
+            </div>
+            <div>
+                <h3>Pairs</h3>
+                <ul>
+                    {Array.isArray(pairs) ? pairs.map(pair => (
+                        <li key={pair}>{pair}</li>
+                    )) : <li>No pairs available</li>}
+                </ul>
+            </div>
+            <div>
+                <h3>Fee Tiers</h3>
+                {Object.keys(feeTiers).map(tier => (
+                    <div key={tier}>
+                        <input
+                            type="checkbox"
+                            checked={feeTiers[tier]}
+                            onChange={() => handleFeeTierChange(tier)}
+                        />
+                        <label>{tier}</label>
+                    </div>
+                ))}
+            </div>
+            <Dashboard pairs={pairs} exchanges={exchanges} />
+        </div>
+    );
+};
 
 export default Settings;

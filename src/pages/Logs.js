@@ -1,51 +1,53 @@
-import React, { useEffect, useState, useContext } from 'react';
-import { PairContext } from '../context/PairContext';
-import { findArbitrageOpportunities } from '../services/arbitrageService';
+import React, { useState, useEffect } from 'react';
+import { scanForOpportunities } from '../utils/arbitrage';
 
-function Logs() {
-  const [logs, setLogs] = useState([]);
-  const { pairs } = useContext(PairContext);
+const Logs = ({ pairs, exchanges }) => {
+    const [logs, setLogs] = useState([]);
 
-  useEffect(() => {
-    const fetchOpportunities = async () => {
-      setLogs((prevLogs) => [...prevLogs, 'Starting scan...']);
-      const opportunities = await findArbitrageOpportunities(pairs);
-      setLogs((prevLogs) => [
-        ...prevLogs,
-        `Scanned pairs: ${opportunities.length}`,
-        ...opportunities.map(opportunity => `
-          Opportunity detected:
-          Base Token: ${opportunity.baseToken}
-          Pair Token: ${opportunity.pairToken}
-          Exchange: ${opportunity.exchange}
-          Fee: ${opportunity.fee}
-          Price Token0: ${opportunity.priceToken0}
-          Price Token1: ${opportunity.priceToken1}
-          Liquidity: ${opportunity.liquidity}
-        `)
-      ]);
-    };
+    useEffect(() => {
+        // Fetch and scan for opportunities
+        const fetchLogs = async () => {
+            console.log('Scanning for arbitrage opportunities...');
+            const opportunities = await scanForOpportunities(pairs, exchanges);
+            setLogs(opportunities);
+        };
 
-    fetchOpportunities();
-    const interval = setInterval(fetchOpportunities, 60000); // Scan every 60 seconds
+        fetchLogs();
+    }, [pairs, exchanges]);
 
-    return () => clearInterval(interval);
-  }, [pairs]);
-
-  return (
-    <div className="content">
-      <h2>Logs</h2>
-      {logs.length === 0 ? (
-        <p>No logs yet.</p>
-      ) : (
-        <ul>
-          {logs.map((log, index) => (
-            <li key={index}>{log}</li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
+    return (
+        <div className="logs">
+            <h2>Logs</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Pair</th>
+                        <th>Exchange 1</th>
+                        <th>Exchange 2</th>
+                        <th>Price 1</th>
+                        <th>Price 2</th>
+                        <th>Volume 1</th>
+                        <th>Volume 2</th>
+                        <th>Profit</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {logs.map((log, index) => (
+                        <tr key={index}>
+                            <td>{log.pair}</td>
+                            <td>{log.exchange1}</td>
+                            <td>{log.exchange2}</td>
+                            <td>{log.price1}</td>
+                            <td>{log.price2}</td>
+                            <td>{log.volume1}</td>
+                            <td>{log.volume2}</td>
+                            <td>{log.profit}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    );
+};
 
 export default Logs;
